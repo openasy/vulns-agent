@@ -22,6 +22,18 @@ export function syftArgs({ root, name, excludes }: ScanOptions): string[] {
   return ["scan", `dir:${root}`, "--source-name", name, "-o", "syft-json", "-q", ...excludes.flatMap((p) => ["--exclude", `./${p.replace(/^\.?\/+|\/+$/g, "")}/**`])];
 }
 
+/**
+ * Counts the packages in Syft's SBOM, and refuses an empty one: sent to vulns, it would mark every finding of this host
+ * as resolved. An empty result means the host's root is not mounted or not readable, not that the host has no packages.
+ */
+export function packagesIn(sbom: Buffer, root: string): number {
+  const n = ((JSON.parse(sbom.toString("utf8")) as { artifacts?: unknown[] }).artifacts ?? []).length;
+  if (n === 0) {
+    throw new Error(`Syft found no packages under ${root}: mount the host's / there read-only, readable by uid ${process.getuid?.() ?? "65532"}; nothing was sent`);
+  }
+  return n;
+}
+
 /** Runs Syft and returns its JSON SBOM. */
 export function scan(opts: ScanOptions): Promise<Buffer> {
   return new Promise((resolve, reject) => {

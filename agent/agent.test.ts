@@ -7,7 +7,7 @@ import { gunzipSync } from "node:zlib";
 import { afterEach, describe, expect, it } from "vitest";
 import { createAgentHandler, type AgentStatus } from "./app.ts";
 import { heartbeat, sendSbom, type HeartbeatState } from "./report.ts";
-import { DEFAULT_EXCLUDES, scan, syftArgs } from "./scan.ts";
+import { DEFAULT_EXCLUDES, packagesIn, scan, syftArgs } from "./scan.ts";
 
 const servers: Server[] = [];
 afterEach(() => Promise.all(servers.splice(0).map((s) => new Promise((r) => s.close(r)))));
@@ -47,6 +47,13 @@ describe("syft", () => {
     const opts = { root: "/host", name: "web-1", excludes: [] };
     expect(JSON.parse((await scan({ ...opts, bin: ok })).toString())).toEqual({ artifacts: [{ name: "bash" }] });
     await expect(scan({ ...opts, bin: bad })).rejects.toThrow("syft failed (exit 1): could not read /host/var/lib/dpkg");
+  });
+});
+
+describe("an empty SBOM", () => {
+  it("is never sent: it would resolve every finding of the host", () => {
+    expect(packagesIn(Buffer.from('{"artifacts":[{"name":"bash"},{"name":"openssl"}]}'), "/host")).toBe(2);
+    expect(() => packagesIn(Buffer.from('{"artifacts":[]}'), "/host")).toThrow(/no packages under \/host.*nothing was sent/);
   });
 });
 

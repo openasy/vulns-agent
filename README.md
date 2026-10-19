@@ -28,6 +28,8 @@ storage (`/var/lib/docker`, `/var/lib/containerd`, `/var/lib/containers`, `/var/
 from CI, where they are built.
 
 It scans on start, every `SCAN_HOURS`, and when vulns asks (the *Scan now* button, delivered with the next heartbeat).
+When a scan fails, for example because vulns is still starting, it tries again after 30 seconds, doubling up to 30
+minutes, instead of waiting `SCAN_HOURS`.
 SBOMs are sent gzipped. Syft's own update check is off; the agent contacts nothing but vulns (ADR 0015).
 
 | Variable | Default | |
@@ -40,11 +42,25 @@ SBOMs are sent gzipped. Syft's own update check is off; the agent contacts nothi
 | `SCAN_EXCLUDE` | | More paths to skip, comma-separated, relative to the host root |
 | `HEARTBEAT_SECONDS` | `60` | |
 | `PORT` | `9100` | `/healthz`, `/readyz`, `/metrics` |
+| `VULNS_AGENT_PLATFORM` | `container` | `kubernetes` marks the host as a Kubernetes node in vulns; the Helm chart sets it |
 
 `/readyz` is ready when a scan was sent and vulns accepts the heartbeat; otherwise it lists the problems.
 
 Measured on 0.1.0: about 55 MB of memory between scans; scanning an Ubuntu 24.04 root (92 packages) takes about
 3 seconds. A host with many language packages takes longer and Syft uses more memory while it runs.
+
+## Kubernetes
+
+The [vulns Helm chart](https://github.com/openasy/vulns/tree/main/charts/vulns) runs the agent on every node as a
+DaemonSet, named after the node. To report to a vulns that runs elsewhere, install only the agents:
+
+```bash
+helm install vulns-agent oci://ghcr.io/openasy/charts/vulns --version 0.1.0 --namespace openasy --create-namespace \
+  --set vulns.enabled=false --set agent.url=https://vulns.example.com --set auth.ingestToken=$VULNS_INGEST_TOKEN
+```
+
+The node's `/` is mounted read-only through `hostPath`, which the Pod Security `baseline` and `restricted` levels
+forbid; the namespace must allow it.
 
 ## Verify an image
 

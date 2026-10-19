@@ -4,7 +4,7 @@ import { hostname } from "node:os";
 import { createAgentHandler } from "./app.ts";
 import { log } from "./log.ts";
 import { heartbeat, sendSbom, type HeartbeatState, type Target } from "./report.ts";
-import { DEFAULT_EXCLUDES, scan } from "./scan.ts";
+import { DEFAULT_EXCLUDES, packagesIn, scan } from "./scan.ts";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
 
@@ -45,7 +45,7 @@ async function runScan(reason: string) {
   try {
     log("info", "scanning", { reason, root });
     const sbom = await scan({ bin: process.env.SYFT_BIN ?? "/usr/local/bin/syft", root, name: id, excludes });
-    lastPackages = ((JSON.parse(sbom.toString("utf8")) as { artifacts?: unknown[] }).artifacts ?? []).length;
+    lastPackages = packagesIn(sbom, root);
     const result = await sendSbom(target, sbom);
     lastScanSeconds = Math.round((performance.now() - started) / 1000);
     lastScanAt = new Date().toISOString();
