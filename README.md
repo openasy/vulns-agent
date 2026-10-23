@@ -18,7 +18,7 @@ database, accepts no connections and talks only to the vulns API. It always has 
 docker run -d --name vulns-agent --restart unless-stopped --hostname "$(hostname)" \
   --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
   -v /:/host:ro -e VULNS_URL=https://vulns.example.com -e VULNS_INGEST_TOKEN=... \
-  ghcr.io/openasy/vulns-agent:0.2.0
+  ghcr.io/openasy/vulns-agent:0.3.0
 ```
 
 The agent runs as an unprivileged user with no capabilities. It reads the host's root through a read-only mount:
@@ -55,7 +55,7 @@ The [vulns Helm chart](https://github.com/openasy/vulns/tree/main/charts/vulns) 
 DaemonSet, named after the node. To report to a vulns that runs elsewhere, install only the agents:
 
 ```bash
-helm install vulns-agent oci://ghcr.io/openasy/charts/vulns --version 0.2.0 --namespace openasy --create-namespace \
+helm install vulns-agent oci://ghcr.io/openasy/charts/vulns --version 0.3.0 --namespace openasy --create-namespace \
   --set vulns.enabled=false --set agent.url=https://vulns.example.com --set auth.ingestToken=$VULNS_INGEST_TOKEN
 ```
 
@@ -65,7 +65,7 @@ forbid; the namespace must allow it.
 ## Verify an image
 
 ```bash
-cosign verify ghcr.io/openasy/vulns-agent:0.2.0 \
+cosign verify ghcr.io/openasy/vulns-agent:0.3.0 \
   --certificate-identity-regexp '^https://github.com/openasy/vulns-agent/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
