@@ -1,6 +1,6 @@
 {
   "name": "@openasy/vulns-agent",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "description": "OpenAsy Vulnerabilities agent: lists a host's packages with Syft and sends the SBOM to vulns.",
   "license": "AGPL-3.0-only",
