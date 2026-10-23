@@ -6,7 +6,19 @@ import { spawn } from "node:child_process";
  * Paths under the host root that are not the host's own software: kernel and device trees, scratch space,
  * and container storage (images are scanned from CI, where they are built).
  */
-export const DEFAULT_EXCLUDES = ["proc", "sys", "dev", "run", "tmp", "var/tmp", "var/lib/docker", "var/lib/containerd", "var/lib/kubelet", "var/lib/containers", "var/log"];
+export const DEFAULT_EXCLUDES = [
+  "proc",
+  "sys",
+  "dev",
+  "run",
+  "tmp",
+  "var/tmp",
+  "var/lib/docker",
+  "var/lib/containerd",
+  "var/lib/kubelet",
+  "var/lib/containers",
+  "var/log",
+];
 
 export interface ScanOptions {
   bin: string;
@@ -19,7 +31,16 @@ export interface ScanOptions {
 }
 
 export function syftArgs({ root, name, excludes }: ScanOptions): string[] {
-  return ["scan", `dir:${root}`, "--source-name", name, "-o", "syft-json", "-q", ...excludes.flatMap((p) => ["--exclude", `./${p.replace(/^\.?\/+|\/+$/g, "")}/**`])];
+  return [
+    "scan",
+    `dir:${root}`,
+    "--source-name",
+    name,
+    "-o",
+    "syft-json",
+    "-q",
+    ...excludes.flatMap((p) => ["--exclude", `./${p.replace(/^\.?\/+|\/+$/g, "")}/**`]),
+  ];
 }
 
 /**
@@ -29,7 +50,9 @@ export function syftArgs({ root, name, excludes }: ScanOptions): string[] {
 export function packagesIn(sbom: Buffer, root: string): number {
   const n = ((JSON.parse(sbom.toString("utf8")) as { artifacts?: unknown[] }).artifacts ?? []).length;
   if (n === 0) {
-    throw new Error(`Syft found no packages under ${root}: mount the host's / there read-only, readable by uid ${process.getuid?.() ?? "65532"}; nothing was sent`);
+    throw new Error(
+      `Syft found no packages under ${root}: mount the host's / there read-only, readable by uid ${process.getuid?.() ?? "65532"}; nothing was sent`,
+    );
   }
   return n;
 }
@@ -41,7 +64,12 @@ export function scan(opts: ScanOptions): Promise<Buffer> {
       stdio: ["ignore", "pipe", "pipe"],
       timeout: opts.timeoutMs ?? 30 * 60_000,
       // Syft never checks for new versions of itself (ADR 0015).
-      env: { PATH: process.env.PATH ?? "/usr/bin:/bin", HOME: process.env.TMPDIR ?? "/tmp", TMPDIR: process.env.TMPDIR ?? "/tmp", SYFT_CHECK_FOR_APP_UPDATE: "false" },
+      env: {
+        PATH: process.env.PATH ?? "/usr/bin:/bin",
+        HOME: process.env.TMPDIR ?? "/tmp",
+        TMPDIR: process.env.TMPDIR ?? "/tmp",
+        SYFT_CHECK_FOR_APP_UPDATE: "false",
+      },
     });
     const out: Buffer[] = [];
     const err: Buffer[] = [];

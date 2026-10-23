@@ -23,7 +23,13 @@ const root = process.env.HOST_ROOT ?? "/host";
 const port = Number(process.env.PORT ?? 9100);
 const scanEvery = Number(process.env.SCAN_HOURS ?? 6) * 3_600_000;
 const beatEvery = Number(process.env.HEARTBEAT_SECONDS ?? 60) * 1000;
-const excludes = [...DEFAULT_EXCLUDES, ...(process.env.SCAN_EXCLUDE ?? "").split(",").map((p) => p.trim()).filter(Boolean)];
+const excludes = [
+  ...DEFAULT_EXCLUDES,
+  ...(process.env.SCAN_EXCLUDE ?? "")
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean),
+];
 const target: Target = { url, token, id, version, platform: process.env.VULNS_AGENT_PLATFORM === "kubernetes" ? "kubernetes" : "container" };
 
 const state: HeartbeatState = { ok: false, failures: 0 };
@@ -73,7 +79,16 @@ void beat().then(() => runScan("start"));
 const timers = [setInterval(() => void beat(), beatEvery), setInterval(() => void runScan("schedule"), scanEvery)];
 
 const server = createServer(
-  createAgentHandler({ version, heartbeat: state, lastScanAt: () => lastScanAt, lastError: () => lastError, scans: () => scans, scanFailures: () => scanFailures, lastPackages: () => lastPackages, lastScanSeconds: () => lastScanSeconds }),
+  createAgentHandler({
+    version,
+    heartbeat: state,
+    lastScanAt: () => lastScanAt,
+    lastError: () => lastError,
+    scans: () => scans,
+    scanFailures: () => scanFailures,
+    lastPackages: () => lastPackages,
+    lastScanSeconds: () => lastScanSeconds,
+  }),
 );
 server.listen(port, () => log("info", "vulns-agent started", { version, id, port, root, vulns: url, scanHours: scanEvery / 3_600_000 }));
 

@@ -30,7 +30,13 @@ export async function heartbeat(t: Target, status: { lastScanAt?: string; lastEr
     const res = await fetch(new URL("/api/v1/agents/heartbeat", t.url), {
       method: "POST",
       headers: { authorization: `Bearer ${t.token}`, "content-type": "application/json" },
-      body: JSON.stringify({ id: t.id, version: t.version, platform: t.platform, lastScanAt: status.lastScanAt ?? null, lastError: status.lastError?.slice(0, 1000) ?? null }),
+      body: JSON.stringify({
+        id: t.id,
+        version: t.version,
+        platform: t.platform,
+        lastScanAt: status.lastScanAt ?? null,
+        lastError: status.lastError?.slice(0, 1000) ?? null,
+      }),
       signal: AbortSignal.timeout(10_000),
     });
     state.lastStatus = res.status;

@@ -67,12 +67,17 @@ describe("reporting to vulns", () => {
     const state: HeartbeatState = { ok: false, failures: 0 };
     expect(await heartbeat(target(url), { lastScanAt: "2026-10-19T00:00:00.000Z" }, state)).toBe(true);
     expect(state).toMatchObject({ ok: true, lastStatus: 202, failures: 0 });
-    expect(received).toEqual({ auth: "Bearer t", body: { id: "web-1", version: "1.2.3", platform: "kubernetes", lastScanAt: "2026-10-19T00:00:00.000Z", lastError: null } });
+    expect(received).toEqual({
+      auth: "Bearer t",
+      body: { id: "web-1", version: "1.2.3", platform: "kubernetes", lastScanAt: "2026-10-19T00:00:00.000Z", lastError: null },
+    });
   });
 
   it("keeps vulns's explanation when the heartbeat is refused", async () => {
     const url = await listen((_req, res) =>
-      res.writeHead(409, { "content-type": "application/problem+json" }).end(JSON.stringify({ status: 409, code: "version-mismatch", title: "Version mismatch", detail: "install vulns-agent 1.2.4" })),
+      res
+        .writeHead(409, { "content-type": "application/problem+json" })
+        .end(JSON.stringify({ status: 409, code: "version-mismatch", title: "Version mismatch", detail: "install vulns-agent 1.2.4" })),
     );
     const state: HeartbeatState = { ok: true, failures: 0 };
     expect(await heartbeat(target(url), {}, state)).toBe(false);
@@ -96,14 +101,28 @@ describe("reporting to vulns", () => {
 });
 
 describe("health", () => {
-  const base: AgentStatus = { version: "1.2.3", heartbeat: { ok: true, failures: 0 }, lastScanAt: () => undefined, lastError: () => undefined, scans: () => 0, scanFailures: () => 0, lastPackages: () => 0, lastScanSeconds: () => 0 };
+  const base: AgentStatus = {
+    version: "1.2.3",
+    heartbeat: { ok: true, failures: 0 },
+    lastScanAt: () => undefined,
+    lastError: () => undefined,
+    scans: () => 0,
+    scanFailures: () => 0,
+    lastPackages: () => 0,
+    lastScanSeconds: () => 0,
+  };
 
   it("is not ready before the first scan or without vulns", async () => {
-    const url = await listen(createAgentHandler({ ...base, heartbeat: { ok: false, failures: 2, lastError: "fetch failed" }, lastError: () => "syft failed (exit 1): boom" }));
+    const url = await listen(
+      createAgentHandler({ ...base, heartbeat: { ok: false, failures: 2, lastError: "fetch failed" }, lastError: () => "syft failed (exit 1): boom" }),
+    );
     expect((await fetch(`${url}/healthz`)).status).toBe(200);
     const res = await fetch(`${url}/readyz`);
     expect(res.status).toBe(503);
-    expect(((await res.json()) as { problems: string[] }).problems).toEqual(["no scan sent yet: syft failed (exit 1): boom", "vulns unreachable: fetch failed"]);
+    expect(((await res.json()) as { problems: string[] }).problems).toEqual([
+      "no scan sent yet: syft failed (exit 1): boom",
+      "vulns unreachable: fetch failed",
+    ]);
   });
 
   it("is ready after a scan, and exposes metrics", async () => {
