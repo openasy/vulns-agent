@@ -18,7 +18,7 @@ database, accepts no connections and talks only to the vulns API. It always has 
 docker run -d --name vulns-agent --restart unless-stopped --hostname "$(hostname)" \
   --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
   -v /:/host:ro -e VULNS_URL=https://vulns.example.com -e VULNS_INGEST_TOKEN=... \
-  ghcr.io/openasy/vulns-agent:0.7.1
+  ghcr.io/openasy/vulns-agent:0.7.3
 ```
 
 The agent runs as an unprivileged user with no capabilities. It reads the host's root through a read-only mount:
@@ -65,7 +65,7 @@ forbid; the namespace must allow it.
 ## Verify an image
 
 ```bash
-cosign verify ghcr.io/openasy/vulns-agent:0.7.1 \
+cosign verify ghcr.io/openasy/vulns-agent:0.7.3 \
   --certificate-identity-regexp '^https://github.com/openasy/vulns-agent/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
