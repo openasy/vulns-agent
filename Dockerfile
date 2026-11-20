@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Syft lists the host's packages. Pinned by digest (ADR 0027); Dependabot proposes updates.
-FROM anchore/syft:v1.55.0@sha256:4cc92b64ca74ffca4c94d4c8fcc01f217731375300be14d0b6eeb2e82eaa110a AS syft
+FROM anchore/syft:v1.57.2@sha256:e97e20b6e6d1699c60296b66ab337941724f9bd06ac279d893eda89601fc4b2a AS syft
 
 # The agent has no runtime dependencies: Node runs the TypeScript sources directly.
 FROM gcr.io/distroless/nodejs26-debian13:nonroot
